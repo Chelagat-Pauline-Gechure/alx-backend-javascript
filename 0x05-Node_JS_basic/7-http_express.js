@@ -1,29 +1,32 @@
 const express = require('express');
 
-const args = process.argv.slice(2);
-const countStudents = require('./3-read_file_async');
-
-const DATABASE = args[0];
+const PORT = 1245;
 
 const app = express();
-const port = 1245;
+const getStudentData = require('./3-read_file_async');
 
 app.get('/', (req, res) => {
+  res.setHeader('Content-Type', 'text/plain');
   res.send('Hello Holberton School!');
 });
 
 app.get('/students', async (req, res) => {
-  const msg = 'This is the list of our students\n';
-  try {
-    const students = await countStudents(DATABASE);
-    res.send(`${msg}${students.join('\n')}`);
-  } catch (error) {
-    res.send(`${msg}${error.message}`);
-  }
+  res.setHeader('Content-Type', 'text/plain');
+
+  res.write('This is the list of our students\n');
+
+  await getStudentData(process.argv[2]).then((data) => {
+    res.write(`Number of students: ${data.students.length}\n`);
+    res.write(`Number of students in CS: ${data.CS.length}. List: ${data.CS.join(', ')}\n`);
+    res.write(`Number of students in SWE: ${data.SWE.length}. List: ${data.SWE.join(', ')}`);
+  }).catch((err) => res.write(err.message))
+    .finally(() => {
+      res.end();
+    });
 });
 
-app.listen(port, () => {
-  //   console.log(`Example app listening at http://localhost:${port}`);
+app.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
 });
 
 module.exports = app;
